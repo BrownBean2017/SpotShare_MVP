@@ -2,11 +2,11 @@
 import { GoogleGenAI } from "@google/genai";
 import { ParkingSpot } from "../types";
 
+// The API key is injected via process.env.API_KEY
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
 
 /**
- * Uses Gemini 2.5 to find the best parking spots based on a natural language query.
- * Adheres to rules: No responseMimeType/responseSchema when using googleMaps tool.
+ * Uses Gemini to find the best parking spots based on a natural language query.
  */
 export const getSmartRecommendations = async (query: string, spots: ParkingSpot[]) => {
   const spotsContext = spots.map(s => ({
@@ -17,43 +17,49 @@ export const getSmartRecommendations = async (query: string, spots: ParkingSpot[
     type: s.type
   }));
 
-  const response = await ai.models.generateContent({
-    model: 'gemini-2.5-flash',
-    contents: `User search: "${query}". 
-    Our spots: ${JSON.stringify(spotsContext)}.
-    Identify which spots match. Return your answer as a raw JSON array of objects with "spotId" and "reason" fields.
-    Format example: [{"spotId": "1", "reason": "Close to the stadium"}]
-    Do not include any other text, only the JSON.`,
-    config: {
-      tools: [{ googleMaps: {} }],
-    }
-  });
-
   try {
-    // Extract JSON from potential Markdown response
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `You are a parking assistant. A user is looking for: "${query}". 
+      Available spots: ${JSON.stringify(spotsContext)}.
+      
+      Return a JSON array of objects with "spotId" and "reason". 
+      "reason" should be a short, encouraging sentence explaining the match.
+      Example: [{"spotId": "1", "reason": "Perfect location for your commute!"}]
+      Return ONLY the raw JSON array.`,
+    });
+
     const text = response.text || '[]';
     const jsonMatch = text.match(/\[.*\]/s);
     const cleanedJson = jsonMatch ? jsonMatch[0] : text;
     return JSON.parse(cleanedJson);
   } catch (e) {
-    console.error("Gemini recommendation failed:", e);
+    console.error("AI Recommendation failed:", e);
     return [];
   }
 };
 
 export const generateListingDescription = async (details: any) => {
-  const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
-    contents: `Write a 2-3 sentence catchy description for a ${details.type} parking spot at ${details.address}. Mention these features: ${details.features?.join(', ') || 'convenient location'}.`,
-  });
-  return response.text;
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `Write a high-converting 2-sentence description for a ${details.type} at ${details.address}. Focus on safety and convenience.`,
+    });
+    return response.text || "A great parking spot in a convenient location.";
+  } catch (e) {
+    return "A secure and convenient parking space.";
+  }
 };
 
 export const suggestPrice = async (location: string, type: string) => {
-  const response = await ai.models.generateContent({
-    model: 'gemini-3-flash-preview',
-    contents: `Suggest a competitive hourly parking price (number only) for a ${type} in ${location}.`,
-  });
-  const price = parseFloat(response.text?.replace(/[^0-9.]/g, '') || '15');
-  return isNaN(price) ? 15 : price;
+  try {
+    const response = await ai.models.generateContent({
+      model: 'gemini-3-flash-preview',
+      contents: `Suggest a competitive hourly parking price for a ${type} in ${location}. Return ONLY the number.`,
+    });
+    const price = parseFloat(response.text?.replace(/[^0-9.]/g, '') || '12');
+    return isNaN(price) ? 12 : price;
+  } catch (e) {
+    return 12;
+  }
 };

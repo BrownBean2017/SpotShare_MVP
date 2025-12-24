@@ -1,0 +1,7 @@
+{
+  "name": "ParkShare - Parking Spot Simplified!",
+  "description": "A high-end marketplace for peer-to-peer parking rentals. Features AI-powered search assistance, dynamic pricing suggestions for hosts, and a seamless booking experience.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}

@@ -1,5 +1,4 @@
-
-import { ParkingSpot } from './types';
+import { ParkingSpot } from './types.ts';
 
 export const INITIAL_SPOTS: ParkingSpot[] = [
   {

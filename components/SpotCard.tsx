@@ -1,6 +1,5 @@
-
 import React from 'react';
-import { ParkingSpot } from '../types';
+import { ParkingSpot } from '../types.ts';
 
 interface SpotCardProps {
   spot: ParkingSpot;

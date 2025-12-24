@@ -1,6 +1,5 @@
-
 import { GoogleGenAI } from "@google/genai";
-import { ParkingSpot } from "../types";
+import { ParkingSpot } from "../types.ts";
 
 // The API key is injected via process.env.API_KEY
 const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
